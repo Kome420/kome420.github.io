@@ -572,7 +572,7 @@
             <button class="danger" id="deleteBtn" type="button">Smazat vybraný závod</button>
           </div>
 
-          <div class="status" id="status">Pro odeslání závodu na jiné zařízení použij „Sdílet závod“.</div>
+          <div class="status" id="status">Závody se ukládají do odkazu i do tohoto prohlížeče. Pro jiné zařízení pošli aktuální odkaz.</div>
         </div>
 
         <div class="placeholder hidden" id="placeholderView">
@@ -667,6 +667,15 @@
     let editingRaceId = null;
 
     function loadState() {
+      const sharedState = decodeStateFromUrl();
+
+      if (sharedState) {
+        races = sharedState.races;
+        selectedRaceId = sharedState.selectedRaceId;
+        saveState(false);
+        return;
+      }
+
       try {
         races = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
       } catch {
@@ -680,7 +689,7 @@
       }
     }
 
-    function saveState() {
+    function saveState(updateUrl = true) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(races));
 
       if (selectedRaceId) {
@@ -688,6 +697,58 @@
       } else {
         localStorage.removeItem(SELECTED_KEY);
       }
+
+      if (updateUrl) {
+        updateUrlWithState();
+      }
+    }
+
+    function encodeText(value) {
+      return btoa(unescape(encodeURIComponent(value)));
+    }
+
+    function decodeText(value) {
+      return decodeURIComponent(escape(atob(value)));
+    }
+
+    function encodeStateForUrl() {
+      const state = {
+        races,
+        selectedRaceId
+      };
+
+      return encodeText(JSON.stringify(state));
+    }
+
+    function decodeStateFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const encodedState = params.get("state");
+      if (!encodedState) return null;
+
+      try {
+        const parsed = JSON.parse(decodeText(encodedState));
+
+        if (!parsed || !Array.isArray(parsed.races)) return null;
+
+        return {
+          races: parsed.races,
+          selectedRaceId: parsed.selectedRaceId || parsed.races[0]?.id || null
+        };
+      } catch {
+        return null;
+      }
+    }
+
+    function updateUrlWithState() {
+      const baseUrl = `${window.location.origin}${window.location.pathname}`;
+
+      if (!races.length) {
+        window.history.replaceState({}, document.title, baseUrl);
+        return;
+      }
+
+      const url = `${baseUrl}?state=${encodeStateForUrl()}`;
+      window.history.replaceState({}, document.title, url);
     }
 
     function encodeRaceForUrl(race) {
@@ -699,12 +760,12 @@
         url: race.url
       });
 
-      return btoa(unescape(encodeURIComponent(data)));
+      return encodeText(data);
     }
 
     function decodeRaceFromUrl(value) {
       try {
-        const json = decodeURIComponent(escape(atob(value)));
+        const json = decodeText(value);
         const parsed = JSON.parse(json);
 
         if (!parsed || !parsed.date) return null;
@@ -747,7 +808,6 @@
         : importedRace.id;
 
       saveState();
-      window.history.replaceState({}, document.title, window.location.pathname);
       setStatus("Sdílený závod byl uložený do tohoto zařízení.", "ok");
     }
 
@@ -756,7 +816,7 @@
       if (!race) return;
 
       const baseUrl = `${window.location.origin}${window.location.pathname}`;
-      const shareUrl = `${baseUrl}?race=${encodeRaceForUrl(race)}`;
+      const shareUrl = `${baseUrl}?state=${encodeStateForUrl()}`;
       const shareText = `${race.name || "Závod"} – ${formatDate(race.date)}`;
 
       if (navigator.share) {
@@ -1059,6 +1119,7 @@
     function init() {
       loadState();
       importRaceFromUrl();
+      updateUrlWithState();
       els.saveBtn.addEventListener("click", saveRaceFromForm);
       els.clearBtn.addEventListener("click", clearForm);
       els.cancelEditBtn.addEventListener("click", cancelEdit);

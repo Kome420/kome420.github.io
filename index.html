@@ -464,7 +464,7 @@ appearance: none;
     }
 
     #trainingPanel {
-      margin-top: 20px;
+      margin: 0 0 20px;
     }
 
     .training-content {
@@ -600,6 +600,18 @@ appearance: none;
      <button class="hero-icon" id="trainingToggle" type="button" aria-label="Zobrazit dnešní trénink" title="Zobrazit dnešní trénink">🏃</button>
     </header>
 
+    <section class="card hidden" id="trainingPanel">
+      <div class="section">
+        <h2 class="section-title">Dnešní trénink</h2>
+        <div class="training-content" id="trainingContent">
+          <div class="training-title">Aktuální doporučení</div>
+          <div class="training-main">Lehký běh 5 km</div>
+          <div class="training-note">Po doběhu přidej 10 minut strečinku a krátké uvolnění.</div>
+        </div>
+        <button class="secondary full" id="closeTraining" type="button">Zavřít</button>
+      </div>
+    </section>
+
     <div class="layout">
       <section class="card main-card">
         <div class="section" id="detailView">
@@ -694,19 +706,6 @@ appearance: none;
           <div class="race-list" id="raceList"></div>
         </section>
       </aside>
-    </div>
-
-    <section class="card hidden" id="trainingPanel">
-      <div class="section">
-        <h2 class="section-title">Dnešní trénink</h2>
-        <div class="training-content" id="trainingContent">
-          <div class="training-title">Aktuální doporučení</div>
-          <div class="training-main">Lehký běh 5 km</div>
-          <div class="training-note">Po doběhu přidej 10 minut strečinku a krátké uvolnění.</div>
-        </div>
-        <button class="secondary full" id="closeTraining" type="button">Zavřít</button>
-      </div>
-    </section>
   </main>
 
   <script>
